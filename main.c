@@ -1,172 +1,149 @@
-#include<SoftwareSerial.h> 
-#include <Wire.h>  
-#include <LiquidCrystal_I2C.h> 
- 
-// Set the LCD address to 0x27 for a 16 chars and 2 line display 
-LiquidCrystal_I2C lcd(0x27, 16, 2); 
-//SoftwareSerial mySerial(17, 16); // RX, TX 
-char Card_id[13];          
-bool stringComplete = false;   
-int i=0; 
-const int voice1=12; 
-const int voice2=11; 
-const int voice3=10; 
-const int voice4=9; 
-const int voice5=8; 
-const int voice6=7; 
-const int voice7=6; 
-const int voice8=5; 
-const int buzzer=4; 
-void setup() { 
-  pinMode(voice1,OUTPUT); 
-  pinMode(voice2,OUTPUT); 
-  pinMode(voice3,OUTPUT); 
-  pinMode(voice4,OUTPUT); 
-  pinMode(voice5,OUTPUT); 
-  pinMode(voice6,OUTPUT); 
-  pinMode(voice7,OUTPUT); 
-  pinMode(voice8,OUTPUT); 
-  pinMode(buzzer,OUTPUT); 
-   
-  Serial.begin(9600); 
-  lcd.begin(); 
-  lcd.clear(); 
-  lcd.setCursor(0,0); 
-  lcd.print("*RFID BUS "); 
-  lcd.setCursor(0,1); 
-  lcd.print("Arrival System "); 
-  digitalWrite(voice1,HIGH);  
-  digitalWrite(voice2,HIGH);  
-  digitalWrite(voice3,HIGH);  
-  digitalWrite(voice4,HIGH);  
-  digitalWrite(voice5,HIGH);  
-  digitalWrite(voice6,HIGH);  
-  digitalWrite(voice7,HIGH);  
-  digitalWrite(voice8,HIGH);  
-  delay(1500); 
-  delay(2000); 
+#define BLYNK_PRINT Serial
+#define BLYNK_TEMPLATE_ID "xxxxxxxxxx"
+#define BLYNK_TEMPLATE_NAME "xxxxxxxxxxxxxx"
+#define BLYNK_AUTH_TOKEN "xxxxxxxxxxxxxxxxxxxxxxx"
+
+#include "EmonLib.h"   
+#include <WiFi.h>
+#include <WiFiClient.h>
+#include <BlynkSimpleEsp32.h>
+
+ EnergyMonitor emon;
+
+#define vCalibration 106.8
+#define currCalibration 0.52
+BlynkTimer timer;
+
+
+ float kWh = 0;
+unsigned long lastmillis = millis();
+
+char auth[] = "VA06GwS0I_tElHt7EULbEbExut43CwyG";
+const char *ssid ="xxxxxxxxx";  // Replace with your WiFi name
+const char *pass= "xxxxxxxxxx"; //Replace with your WiFi password
+const char* apiKey = "G4ZYYjDEGDLK";         
+const char* templateID = "114";           
+const char* mobileNumber = "+91xxxxxxxxx"; //Replace with your mobile number
+
+const char* var1 = "xxxxxxx";//Replace the with the word 
+const char* var2 = "xxxxxxxxxxxxxxxxxx";//replace with the word
+
+void sendSMS() {
+ if (WiFi.status() == WL_CONNECTED) {
+   WiFiClient client; 
+   String apiUrl = "/send_sms?ID=" + String(templateID);
+   Serial.print("Connecting to server...");
+   if (client.connect("www.circuitdigest.cloud", 80)) { 
+     Serial.println("connected!");
+
+    String payload = "{\"mobiles\":\"" + String(mobileNumber) + 
+                      "\",\"var1\":\"" + String(var1) + 
+                      "\",\"var2\":\"" + String(var2) + "\"}";
+
+    client.println("POST " + apiUrl + " HTTP/1.1");
+     client.println("Host: www.circuitdigest.cloud");
+     client.println("Authorization: " + String(apiKey));
+     client.println("Content-Type: application/json");
+     client.println("Content-Length: " + String(payload.length()));
+     client.println(); 
+     client.println(payload); 
     
-} 
- 
-void loop() { 
-  digitalWrite(voice1,HIGH);  
-  digitalWrite(voice2,HIGH);  
-  digitalWrite(voice3,HIGH);  
-  digitalWrite(voice4,HIGH);  
-  digitalWrite(voice5,HIGH);  
-  digitalWrite(voice6,HIGH);  
-  digitalWrite(voice7,HIGH);  
-  digitalWrite(voice8,HIGH);  
-lcd.clear(); 
-  lcd.setCursor(0,0); 
-  lcd.print("*SHOW RFID "); 
-  lcd.setCursor(0,1); 
-  lcd.print("CARD FOR BUS *"); 
- 
-  if (stringComplete) { 
-    lcd.clear(); 
-    lcd.print(Card_id); 
-    Serial.print(Card_id); 
-    delay(100); 
-    if(strcmp(Card_id,"1300A2DD2F43")==0) 
-    { 
-      digitalWrite(voice1,LOW); 
-       lcd.clear(); 
-      lcd.setCursor(0,0); 
-      lcd.print("MGBS BUS"); 
-      lcd.setCursor(0,1); 
-      lcd.print(""); 
-       delay(4000); 
-       digitalWrite(voice1,HIGH); 
-    } 
-    if(strcmp(Card_id,"18004DA07683")==0) 
-    { 
-       digitalWrite(voice2,LOW); 
-       lcd.clear(); 
-      lcd.setCursor(0,0); 
-      lcd.print("MEHBOOB NAGAR"); 
-      lcd.setCursor(0,1); 
-      lcd.print("bus "); 
-       delay(4000); 
-       digitalWrite(voice2,HIGH); 
-       
-    } 
- 
- 
-  if(strcmp(Card_id,"4B0078CF8579")==0) 
-    { 
-      digitalWrite(voice3,LOW); 
-       lcd.clear(); 
-      lcd.setCursor(0,0); 
-      lcd.print("KURNOOL BUS"); 
-      lcd.setCursor(0,1); 
-      lcd.print(""); 
-       delay(4000); 
-       digitalWrite(voice3,HIGH);  
-    } 
- 
-    if(strcmp(Card_id,"1400487E0E2C")==0) 
-    { 
-      digitalWrite(voice4,LOW); 
-       lcd.clear(); 
-      lcd.setCursor(0,0); 
-      lcd.print("ANANTAPUR BUS"); 
-      lcd.setCursor(0,1); 
-      lcd.print(""); 
-       delay(4000); 
-       digitalWrite(voice4,HIGH); 
-       
-    } 
-  if(strcmp(Card_id,"4B00700AE9D8")==0) 
-    { 
-      digitalWrite(voice5,LOW); 
-       lcd.clear(); 
-      lcd.setCursor(0,0); 
-      lcd.print("HINDUPUR BUS"); 
-      lcd.setCursor(0,1); 
-      lcd.print(""); 
-       delay(4000); 
-       digitalWrite(voice5,HIGH); 
-       
-    } 
-    
-if(strcmp(Card_id,"4B006FE1AF6A")==0) // 7 
-    { 
-      digitalWrite(voice6,LOW); 
-       lcd.clear(); 
-      lcd.setCursor(0,0); 
-      lcd.print("dharmavaram "); 
-      lcd.setCursor(0,1); 
-      lcd.print("BUS"); 
-       delay(4000); 
-       digitalWrite(voice6,HIGH); 
-       
-    } 
-  if(strcmp(Card_id,"1300A2DD2C40")==0) 
-    { 
-      digitalWrite(voice7,LOW); 
-       lcd.clear(); 
-      lcd.setCursor(0,0); 
-      lcd.print("yesvantpur "); 
-      lcd.setCursor(0,1); 
-      lcd.print("BUS"); 
-       delay(4000); 
-       digitalWrite(voice7,HIGH); 
-       
-    } 
-     if(strcmp(Card_id,"1300A2DD2D41")==0) 
-    { 
-      digitalWrite(voice8,LOW); 
-       lcd.clear(); 
-      lcd.setCursor(0,0); 
-      lcd.print("BANGLORE BUS"); 
-      lcd.setCursor(0,1); 
-      lcd.print(""); 
-       delay(4000); 
-       digitalWrite(voice8,HIGH); 
-       
-    } 
-    if(strcmp(Card_id,"1700A2DD2C40")==0) 
-    { 
-      digitalWrite(buzzer,HIGH); 
-       lcd.clear();
+     int responseCode = -1; 
+     while (client.connected() || client.available()) {
+       if (client.available()) {
+         String line = client.readStringUntil('\n'); 
+         Serial.println(line);
+        
+        if (line.startsWith("HTTP/")) {
+           responseCode = line.substring(9, 12).toInt(); 
+           Serial.print("HTTP Response Code: ");
+           Serial.println(responseCode);
+         }
+
+         if (line == "\r") {
+           break;
+         }
+       }
+     }
+
+    if (responseCode == 200) {
+       Serial.println("SMS sent successfully!");
+     } else {
+       Serial.print("Failed to send SMS. Error code: ");
+       Serial.println(responseCode);
+     }
+     client.stop(); 
+   } else {
+     Serial.println("Connection to server failed!");
+   }
+ } else {
+   Serial.println("WiFi not connected!");
+ }
+}
+
+ void myTimerEvent() {
+ emon.calcVI(20, 2000);
+
+    Serial.print("Vrms: ");
+    Serial.print(emon.Vrms, 2);
+    Serial.print("V");
+    Blynk.virtualWrite(V0, emon.Vrms);
+
+    Serial.print("\tIrms: ");
+    Serial.print(emon.Irms, 4);
+    Serial.print("A");
+    Blynk.virtualWrite(V1, emon.Irms);
+
+    Serial.print("\tPower: ");
+    Serial.print(emon.apparentPower, 4);
+    Serial.print("W");
+    Blynk.virtualWrite(V2, emon.apparentPower);
+
+    Serial.print("\tkWh: ");
+    kWh = kWh + emon.apparentPower*(millis()-lastmillis)/3600000000.0;
+    Serial.print(kWh, 4);
+    Serial.println("kWh");
+    lastmillis = millis();
+    Blynk.virtualWrite(V3, kWh);
+}
+ void setup() {
+  Serial.begin(9600);
+  Serial.println();
+  Serial.println("*************************");
+  Serial.print("Connecting to ");
+  Serial.println(ssid);
+
+  WiFi.begin(ssid, pass);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+
+  Serial.println("");
+  Serial.println("WiFi connected");
+  Serial.println("IP address: ");
+  Serial.println(WiFi.localIP());
+
+  emon.voltage(35, vCalibration, 1.7); 
+  emon.current(34, currCalibration);  
+
+  Blynk.begin(auth, ssid, pass);
+
+  timer.setInterval(5000L, myTimerEvent);
+}
+
+
+void loop() {
+  Blynk.run();
+  timer.run();
+  myTimerEvent();
+  if(emon.apparentPower >=xx){  // replace the xx and set a limit
+    sendSMS();
+
+    while(emon.apparentPower > xx){ // replace the xx and set a limit 
+      myTimerEvent();
+
+    }
+  }
+  
+}
