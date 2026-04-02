@@ -1,32 +1,34 @@
 #define BLYNK_PRINT Serial
-#define BLYNK_TEMPLATE_ID "xxxxxxxxxx"
-#define BLYNK_TEMPLATE_NAME "xxxxxxxxxxxxxx"
-#define BLYNK_AUTH_TOKEN "xxxxxxxxxxxxxxxxxxxxxxx"
+#define BLYNK_TEMPLATE_ID "xxxxxxxxxx"   // <-- Your Blynk Template ID from Blynk app
+#define BLYNK_TEMPLATE_NAME "xxxxxxxxxxxxxx"   // <-- Your Blynk Template Name
+#define BLYNK_AUTH_TOKEN "xxxxxxxxxxxxxxxxxxxxxxx"   // <-- Your Blynk Device Auth Token
 
 #include "EmonLib.h"   
 #include <WiFi.h>
 #include <WiFiClient.h>
 #include <BlynkSimpleEsp32.h>
+#include <LiquidCrystal_I2C.h>   
 
- EnergyMonitor emon;
+LiquidCrystal_I2C lcd(0x27, 20, 4);
+
+EnergyMonitor emon;
 
 #define vCalibration 106.8
 #define currCalibration 0.52
 BlynkTimer timer;
 
-
- float kWh = 0;
+float kWh = 0;
 unsigned long lastmillis = millis();
 
-char auth[] = "VA06GwS0I_tElHt7EULbEbExut43CwyG";
-const char *ssid ="xxxxxxxxx";  // Replace with your WiFi name
-const char *pass= "xxxxxxxxxx"; //Replace with your WiFi password
-const char* apiKey = "G4ZYYjDEGDLK";         
-const char* templateID = "114";           
-const char* mobileNumber = "+91xxxxxxxxx"; //Replace with your mobile number
+char auth[] = "xxxxxxxxxxxxxxxx";  // <-- Your Blynk Auth Token
+const char *ssid ="xxxxxxxxx";     // <-- Your WiFi name (SSID)
+const char *pass= "xxxxxxxxxx";    // <-- Your WiFi password
+const char* apiKey = "G4ZYYjDEGDLK";
+const char* templateID = "114";
+const char* mobileNumber = "+91xxxxxxxxx";// <--Your Mobile Number
 
-const char* var1 = "xxxxxxx";//Replace the with the word 
-const char* var2 = "xxxxxxxxxxxxxxxxxx";//replace with the word
+const char* var1 = "xxxxxxx";  // <-- SMS Title (Example: "Overload Alert")
+const char* var2 = "xxxxxxxxxxxxxxxxxx"; // <-- SMS body line where xxxxxx will be replaced with load value
 
 void sendSMS() {
  if (WiFi.status() == WL_CONNECTED) {
@@ -81,32 +83,55 @@ void sendSMS() {
  }
 }
 
- void myTimerEvent() {
+void myTimerEvent() {
  emon.calcVI(20, 2000);
 
-    Serial.print("Vrms: ");
-    Serial.print(emon.Vrms, 2);
-    Serial.print("V");
-    Blynk.virtualWrite(V0, emon.Vrms);
+ Serial.print("Vrms: ");
+ Serial.print(emon.Vrms, 2);
+ Serial.print("V");
+ Blynk.virtualWrite(V0, emon.Vrms);
 
-    Serial.print("\tIrms: ");
-    Serial.print(emon.Irms, 4);
-    Serial.print("A");
-    Blynk.virtualWrite(V1, emon.Irms);
+ Serial.print("\tIrms: ");
+ Serial.print(emon.Irms, 4);
+ Serial.print("A");
+ Blynk.virtualWrite(V1, emon.Irms);
 
-    Serial.print("\tPower: ");
-    Serial.print(emon.apparentPower, 4);
-    Serial.print("W");
-    Blynk.virtualWrite(V2, emon.apparentPower);
+ Serial.print("\tPower: ");
+ Serial.print(emon.apparentPower, 4);
+ Serial.print("W");
+ Blynk.virtualWrite(V2, emon.apparentPower);
 
-    Serial.print("\tkWh: ");
-    kWh = kWh + emon.apparentPower*(millis()-lastmillis)/3600000000.0;
-    Serial.print(kWh, 4);
-    Serial.println("kWh");
-    lastmillis = millis();
-    Blynk.virtualWrite(V3, kWh);
+ Serial.print("\tkWh: ");
+ kWh = kWh + emon.apparentPower*(millis()-lastmillis)/3600000000.0;
+ Serial.print(kWh, 4);
+ Serial.println("kWh");
+ lastmillis = millis();
+ Blynk.virtualWrite(V3, kWh);
+
+ 
+ lcd.clear();
+ lcd.setCursor(0, 0);
+ lcd.print("Vrms: ");
+ lcd.print(emon.Vrms, 2);
+ lcd.print(" V");
+
+ lcd.setCursor(0, 1);
+ lcd.print("Irms: ");
+ lcd.print(emon.Irms, 4);
+ lcd.print(" A");
+
+ lcd.setCursor(0, 2);
+ lcd.print("Power: ");
+ lcd.print(emon.apparentPower, 4);
+ lcd.print(" W");
+
+ lcd.setCursor(0, 3);
+ lcd.print("kWh: ");
+ lcd.print(kWh, 4);
+ lcd.print(" kWh");
 }
- void setup() {
+
+void setup() {
   Serial.begin(9600);
   Serial.println();
   Serial.println("*************************");
@@ -124,26 +149,26 @@ void sendSMS() {
   Serial.println("IP address: ");
   Serial.println(WiFi.localIP());
 
-  emon.voltage(35, vCalibration, 1.7); 
-  emon.current(34, currCalibration);  
+  emon.voltage(35, vCalibration, 1.7);
+  emon.current(34, currCalibration);
 
   Blynk.begin(auth, ssid, pass);
 
   timer.setInterval(5000L, myTimerEvent);
-}
 
+  lcd.init();
+  lcd.backlight();
+}
 
 void loop() {
   Blynk.run();
   timer.run();
   myTimerEvent();
-  if(emon.apparentPower >=xx){  // replace the xx and set a limit
+
+  if(emon.apparentPower >= xx){ // <-- Replace xx with overload power limit (e.g., 500)
     sendSMS();
-
-    while(emon.apparentPower > xx){ // replace the xx and set a limit 
+    while(emon.apparentPower > xx){  // <-- Same limit as above
       myTimerEvent();
-
     }
   }
-  
 }
